@@ -3,24 +3,54 @@
 #include<string.h>
 
 
-int d, N, e;
+int d, N;
 
-// generates public and private key 
-void genKeys(int primeOne, int primeTwo) {
-    // in practice, sometimes e = 3 is used, but the most common value of e is 65537
-    int totientNumber, e = 3, i, remainder;
+
+//generates public key
+int* genPubKey(int primeOne, int primeTwo) {
+    static int keyPair[2];
+    int e = 2, totientNumber;
+    // public key must be > 1 and relatively prime to totient number
+    totientNumber = (primeOne - 1) * (primeTwo - 1);
+
+    while (gcd(e, totientNumber) != 1) {
+        e++;
+    }
+
+    keyPair[0] = e, keyPair[1] = totientNumber;
+
+    return keyPair;
+}
+
+
+// function from geeksforgeeks https://www.geeksforgeeks.org/program-to-find-gcd-or-hcf-of-two-numbers/
+// O(min(a,b)) complexity
+int gcd(int a, int b) {
+    int result = ((a < b) ? a : b);
+
+    while (result > 0) {
+        if (a % result == 0 && b % result == 0) {
+            break;
+        }
+        result--;
+    }
+
+    return result;
+}
+
+
+// generates private key 
+void genPrivKey(int primeOne, int primeTwo, int e, int totientNumber) {
+    int remainder, eSave;
 
     N = primeOne * primeTwo;
-    totientNumber = (primeOne - 1) * (primeTwo - 1);
     remainder = totientNumber;
 
-    // e must be relatively prime in order for Euclid's to work
-    if ((totientNumber / e) == 0) {e = 5;}
-    
     // solving for private key d in ed = 1 mod totientFunction(N)
     // using extended Euclid's algo. O(logM) complexity where M = totient number
     d = euclids(e, totientNumber, 1, 0, remainder);
 }
+
 
 // finding modular multiplicative inverse
 int euclids(int e, int totientNumber, int X, int Y, int remainder) {
@@ -47,7 +77,8 @@ int euclids(int e, int totientNumber, int X, int Y, int remainder) {
 
 
 int main() {
-    int primeOne, primeTwo, ciphertext[101];
+    int primeOne, primeTwo, ciphertext[101], *keyPair, e, totientNumber, cipherVal, asciiVal;
+    unsigned long int exponentiation;
     char message[101], decryption[101], *messagePtr;
     messagePtr = message;
 
@@ -64,10 +95,15 @@ int main() {
     }
     printf("\n");
 
-    // key generation
-    printf("Enter two large (> 10) primes: ");
+    // key generation, 127 because we have to cover entire ASCII table for enc/decryption
+    printf("Enter two primes with sum greater than 127: ");
     scanf("%d  %d", &primeOne, &primeTwo);
-    genKeys(primeOne, primeTwo);
+
+    keyPair = genPubKey(primeOne, primeTwo);
+    e = keyPair[0];
+    totientNumber = keyPair[1];
+
+    genPrivKey(primeOne, primeTwo, e, totientNumber);    
 
     printf("Private key is: %d\n", d);
     printf("Public key is: %d\n", e);
@@ -75,20 +111,28 @@ int main() {
     // encryption, casting chars to numerical ASCII values for encrpyting
     printf("Ciphertext is: ");
     for (int i = 0; i < strlen(message); i++) {
-         int asciiVal = message[i];
-         printf("%d", asciiVal);
-    //     for (int j = e; j != 0; j--) {
-    //           asciiVal *= asciiVal;
-    //     }
-    //     int cipherVal = asciiVal % N;
-    //     ciphertext[i] == cipherVal;
-    //     printf("%d", cipherVal);
+        exponentiation = 1;
+        asciiVal = message[i];
+        //if (i == 0) {printf("%lli", asciiVal);}
+
+        // switch for loop statement
+        for (int j = 1; j <= e; j++) {
+            exponentiation = exponentiation * asciiVal;
+            //printf("\n%d", exponentiation);
+            // exponents and mod rule 
+            exponentiation = exponentiation % N;
+        }
+        //if (i == 0) {printf("%li", exponentiation);}
+        cipherVal = exponentiation % N;
+        ciphertext[i] == cipherVal;
+        printf("%d ", cipherVal);
     }    
 
 
+
     // decryption
-    printf("\n Plaintext is: ");
-    for (int k = 0; k < strlen(message); k++) {
+    //printf("\n Plaintext is: ");
+    //for (int k = 0; k < strlen(message); k++) {
         //int cipherVal = ciphertext[k];
         //for (int l = d; l != 0; l--) {
         //    cipherVal *= cipherVal;
@@ -96,7 +140,7 @@ int main() {
         //int plaintext = cipherVal % N;
         //decryption[k] = plaintext;
         //printf("%d", plaintext);
-    }
+   // }
 
     
 
