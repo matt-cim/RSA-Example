@@ -77,11 +77,11 @@ int euclids(int e, int totientNumber, int X, int Y, int remainder) {
 
 
 int main() {
-    int primeOne, primeTwo, ciphertext[101], *keyPair, e, totientNumber, cipherVal, asciiVal;
+    int primeOne, primeTwo, ciphertext[101], *keyPair, e, totientNumber, asciiVal;
     unsigned long int exponentiation;
-    char message[101], decryption[101], *messagePtr;
+    unsigned char message[101], decrypted[101], hexCipher[101], *messagePtr, asciiToChar;
     messagePtr = message;
-
+  
 
     // reading in the unencrypted message
     printf("Enter message: ");
@@ -89,14 +89,14 @@ int main() {
     fgets(message, sizeof(message), stdin);
 
     printf("Hexadecimal value of message: ");
-    while(*messagePtr) {
+    while (*messagePtr) {
         printf("%x", *messagePtr);
         messagePtr++;
     }
     printf("\n");
 
     // key generation, 127 because we have to cover entire ASCII table for enc/decryption
-    printf("Enter two primes with sum greater than 127: ");
+    printf("\nEnter two primes with product greater than 127: ");
     scanf("%d  %d", &primeOne, &primeTwo);
 
     keyPair = genPubKey(primeOne, primeTwo);
@@ -105,44 +105,60 @@ int main() {
 
     genPrivKey(primeOne, primeTwo, e, totientNumber);    
 
-    printf("Private key is: %d\n", d);
-    printf("Public key is: %d\n", e);
+    printf("\nPrivate key is: %d", d);
+    printf("\nPublic key is: %d", e);
 
     // encryption, casting chars to numerical ASCII values for encrpyting
-    printf("Ciphertext is: ");
-    for (int i = 0; i < strlen(message); i++) {
+    printf("\n\nCiphertext is: ");
+    for (int i = 0; i < strlen(message) - 1; i++) {
         exponentiation = 1;
         asciiVal = message[i];
-        //if (i == 0) {printf("%lli", asciiVal);}
 
-        // switch for loop statement
-        for (int j = 1; j <= e; j++) {
-            exponentiation = exponentiation * asciiVal;
-            //printf("\n%d", exponentiation);
-            // exponents and mod rule 
+        for (int j = e; j >= 1; j--) {
+            exponentiation *= asciiVal;
+            // exponents and mod rule -> data savings
+            exponentiation = exponentiation % N;
+        }        
+        asciiToChar = exponentiation % 128;
+        hexCipher[i] = asciiToChar;
+        ciphertext[i] = exponentiation;
+        printf("%c", asciiToChar);
+    }    
+    printf("\nHexadecimal value of ciphertext: ");
+    messagePtr = hexCipher;
+    while (*messagePtr) {
+        printf("%x", *messagePtr);
+        messagePtr++;
+    }
+
+
+    // decryption with private key
+    printf("\nDeciphering... \n");
+    for (int k = 0; k < strlen(message) - 1; k++) {
+        exponentiation = 1;
+        asciiVal = ciphertext[k];
+
+        for (int l = d; l >= 1; l--) {
+            exponentiation *= asciiVal;
             exponentiation = exponentiation % N;
         }
-        //if (i == 0) {printf("%li", exponentiation);}
-        cipherVal = exponentiation % N;
-        ciphertext[i] == cipherVal;
-        printf("%d ", cipherVal);
-    }    
+        asciiToChar = exponentiation;
+        decrypted[k] = asciiToChar;
+        printf("%c -> %d: (%d ^ %d) mod %d = %d: %d -> %c\n", ciphertext[k], asciiVal, asciiVal, d, N, exponentiation, exponentiation, decrypted[k]);   
+    }
+    printf("\nDecrypted Ciphertext: ");
+    for (int t = 0; t < strlen(message) - 1; t++) {
+        printf("%c", decrypted[t]);
+    }
 
+    //////////////////////////
 
+    for (int pen = 0; pen <= 32; pen++) {
+        printf("\n%c \t\t %d", pen, pen);
+    }
 
-    // decryption
-    //printf("\n Plaintext is: ");
-    //for (int k = 0; k < strlen(message); k++) {
-        //int cipherVal = ciphertext[k];
-        //for (int l = d; l != 0; l--) {
-        //    cipherVal *= cipherVal;
-        //}
-        //int plaintext = cipherVal % N;
-        //decryption[k] = plaintext;
-        //printf("%d", plaintext);
-   // }
+    ///////////////
 
-    
 
     return 0;
 }
