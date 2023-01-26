@@ -151,14 +151,6 @@ int main() {
         printf("%c", decrypted[t]);
     }
 
-    //////////////////////////
-
-    for (int pen = 0; pen <= 32; pen++) {
-        printf("\n%c \t\t %d", pen, pen);
-    }
-
-    ///////////////
-
 
     return 0;
 }
